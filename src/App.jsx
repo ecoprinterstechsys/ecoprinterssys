@@ -830,14 +830,16 @@ function MainApp() {
             <div className="space-y-3 pt-2">
               <label className="text-xs font-bold text-indigo-400 uppercase">2. Detalles del Equipo</label>
               <select className="w-full bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-xs text-white" value={formOrden.tipo_equipo} onChange={e => setFormOrden({ ...formOrden, tipo_equipo: e.target.value })}>
-                <option value="PORTATIL">Portátil / Laptop</option>
-                <option value="CPU">CPU / Escritorio</option>
-                <option value="VARIOS">Monitor / Varios</option>
+                <option value="IMPRESORA">Impresora</option>
+                <option value="COMPUTADOR">Computador / Portátil</option>
+                <option value="MONITOR">Monitor</option>
+                <option value="VARIOS">Varios</option>
               </select>
               <div className="grid grid-cols-2 gap-2">
                 <input placeholder="Marca y Modelo *" className="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-xs text-white" value={formOrden.marca_modelo} onChange={e => setFormOrden({ ...formOrden, marca_modelo: e.target.value })} />
                 <input placeholder="N° de Serie (S/N Equipo)" className="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-xs text-white" value={formOrden.serie} onChange={e => setFormOrden({ ...formOrden, serie: e.target.value })} />
               </div>
+</div>
 
               <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/80 space-y-3">
                 <div className="flex gap-6 text-xs text-slate-200">
