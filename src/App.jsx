@@ -143,8 +143,6 @@ export function AppProvider({ children }) {
     if (obs && obs.trim()) {
       obsArr.push({ fecha: new Date().toLocaleString('es-CO'), texto: obs.trim() });
     }
-    // Registro interno de garantía dentro del JSON existente observaciones.
-    // Se reemplaza solo este registro, sin borrar el historial de avances.
     if (garantiaAplica !== undefined || garantiaTiempo !== undefined) {
       const garantiaAnterior = obtenerGarantiaOrden(ordenObj);
       obsArr = obsArr.filter(item => !item || item._tipo !== 'garantia');
@@ -413,8 +411,6 @@ export function AppProvider({ children }) {
 
 const useApp = () => useContext(AppContext);
 
-// La garantía se guarda dentro de campos JSON que ya existen en Supabase.
-// Así no se agregan ni modifican columnas de la base de datos.
 const CONDICIONES_GARANTIA = 'Para efectos de Garantía se necesita copia de la facrura y la mercancia con todos los accesorios y empaques originales, no se dara garantia por daños ocacionados por alto voltaje, golpes, deterioro o desconfiguracion de la maquina, software, virus o por levantar los sellos de seguridad. la garantia es directamente con el centro de servicio o en el almacen. por ninguna excepcion se hace servicio a domicilio.';
 
 const obtenerGarantiaOrden = (orden) => {
@@ -431,16 +427,11 @@ const obtenerGarantiaFactura = (factura) => {
 
 const esRegistroGarantia = (item) => !!item && item._tipo === 'garantia';
 
-// La cancelación se conserva dentro del JSON existente de items para no exigir
-// nuevas columnas en la tabla facturas.
 const obtenerCancelacionFactura = (factura) =>
   (Array.isArray(factura?.items) ? factura.items : []).find(item => item && item._tipo === 'cancelacion') || null;
 
 const facturaEstaCancelada = (factura) => !!obtenerCancelacionFactura(factura);
 
-// Normaliza teléfonos para enlaces de WhatsApp (wa.me).
-// Los números colombianos de 10 dígitos reciben el indicativo 57.
-// Los números que ya incluyen indicativo internacional se conservan.
 const normalizarTelefonoWhatsApp = (telefono) => {
   if (telefono === null || telefono === undefined || String(telefono).trim() === '') {
     return null;
@@ -448,20 +439,16 @@ const normalizarTelefonoWhatsApp = (telefono) => {
 
   let numero = String(telefono).trim().replace(/\D/g, '');
 
-  // Convierte el prefijo internacional 00: 0057... -> 57...
   if (numero.startsWith('00')) {
     numero = numero.slice(2);
   }
 
-  // Algunos registros guardan el celular colombiano con un cero inicial.
   if (numero.length === 11 && numero.startsWith('0')) {
     numero = '57' + numero.slice(1);
   } else if (numero.length === 10) {
-    // Número celular colombiano local sin indicativo.
     numero = '57' + numero;
   }
 
-  // wa.me requiere un número internacional solo con dígitos (8 a 15 dígitos).
   if (numero.length < 8 || numero.length > 15) {
     return null;
   }
@@ -549,10 +536,9 @@ function MainApp() {
     tipo: 'AMBOS'
   });
 
-  // Estados nuevos para búsqueda y ordenamiento por fecha en Remisiones y Ventas
   const [facturasFiltroInicio, setFacturasFiltroInicio] = useState('');
   const [facturasFiltroFin, setFacturasFiltroFin] = useState('');
-  const [facturasOrdenFecha, setFacturasOrdenFecha] = useState('recientes'); // 'recientes' o 'antiguas'
+  const [facturasOrdenFecha, setFacturasOrdenFecha] = useState('recientes');
   const [ordenesBusqueda, setOrdenesBusqueda] = useState('');
   const [ordenesFiltroInicio, setOrdenesFiltroInicio] = useState('');
   const [ordenesFiltroFin, setOrdenesFiltroFin] = useState('');
@@ -830,16 +816,19 @@ function MainApp() {
             <div className="space-y-3 pt-2">
               <label className="text-xs font-bold text-indigo-400 uppercase">2. Detalles del Equipo</label>
               <select className="w-full bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-xs text-white" value={formOrden.tipo_equipo} onChange={e => setFormOrden({ ...formOrden, tipo_equipo: e.target.value })}>
-                <option value="IMPRESORA">Impresora</option>
-                <option value="COMPUTADOR">Computador / Portátil</option>
+                <option value="PORTATIL">Portátil / Laptop</option>
+                <option value="CPU">CPU / Escritorio</option>
                 <option value="MONITOR">Monitor</option>
-                <option value="VARIOS">Varios</option>
+                <option value="IMPRESORA">Impresora</option>
+                <option value="CONSOLA">Consola de Videojuegos</option>
+                <option value="TABLET">Tablet</option>
+                <option value="TELEFONO">Teléfono / Celular</option>
+                <option value="VARIOS">Varios / Otro</option>
               </select>
               <div className="grid grid-cols-2 gap-2">
                 <input placeholder="Marca y Modelo *" className="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-xs text-white" value={formOrden.marca_modelo} onChange={e => setFormOrden({ ...formOrden, marca_modelo: e.target.value })} />
                 <input placeholder="N° de Serie (S/N Equipo)" className="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-xs text-white" value={formOrden.serie} onChange={e => setFormOrden({ ...formOrden, serie: e.target.value })} />
               </div>
-</div>
 
               <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/80 space-y-3">
                 <div className="flex gap-6 text-xs text-slate-200">
@@ -1085,7 +1074,6 @@ function MainApp() {
               </div>
             </div>
 
-            {/* CONTROLES DE BÚSQUEDA Y ORDENAMIENTO POR FECHA */}
             <div className="bg-slate-800/60 p-4 rounded-xl border border-slate-700/80 flex flex-wrap gap-3 items-end text-xs">
               <div>
                 <label className="text-slate-400 block mb-1 font-semibold">🔍 Desde la fecha</label>
@@ -1142,14 +1130,12 @@ function MainApp() {
                 </thead>
                 <tbody className="divide-y divide-slate-800">
                   {(() => {
-                    // Filtrar por rango de fechas si están definidas
                     const facturasFiltradas = facturas.filter(f => {
                       if (facturasFiltroInicio && f.fecha < facturasFiltroInicio) return false;
                       if (facturasFiltroFin && f.fecha > facturasFiltroFin) return false;
                       return true;
                     });
 
-                    // Ordenar según la selección del usuario
                     const facturasOrdenadas = [...facturasFiltradas].sort((a, b) => {
                       if (facturasOrdenFecha === 'recientes') {
                         return new Date(b.fecha) - new Date(a.fecha) || b.id - a.id;
@@ -2160,7 +2146,6 @@ function MainApp() {
                   const nombreClienteLimpio = (doc.cliente_nombre || 'Cliente').replace(/[^a-zA-Z0-9]/g, '_');
                   const telefonoLimpio = (doc.cliente_telefono || '0000000000').replace(/[^a-zA-Z0-9]/g, '');
                   
-                  // Nombre del archivo estructurado con número, cliente y celular
                   const elHtml = document.getElementById('seccion-impresion').innerHTML;
                   const blob = new Blob([`<html><head><title>Comprobante</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ccc;padding:8px;}</style></head><body>${elHtml}</body></html>`], { type: 'text/html' });
                   const url = URL.createObjectURL(blob);
