@@ -956,7 +956,18 @@ function MainApp() {
                             {o.deja_cargador && <span className="bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800">🔌 Cargador {o.serie_cargador ? `(${o.serie_cargador})` : '(S/N no registrado)'}</span>}
                           </div>
                         </td>
-                        <td className="p-3"><span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-semibold">{o.estado}</span></td>
+                        <td className="p-3">
+                          <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-semibold">{o.estado}</span>
+                          {(Array.isArray(o.observaciones) ? o.observaciones.filter(obs => obs && obs._tipo !== 'garantia') : []).length > 0 && (
+                            <div className="mt-2 space-y-1 text-[10px] text-slate-400">
+                              {(Array.isArray(o.observaciones) ? o.observaciones.filter(obs => obs && obs._tipo !== 'garantia') : []).map((obs, idx) => (
+                                <p key={idx} className="whitespace-pre-wrap break-words">
+                                  <span className="text-slate-500">[{obs.fecha || 'Sin fecha'}]</span> {obs.texto}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                        </td>
                         <td className="p-3 font-bold text-white">
                           <div className="space-y-0.5">
                             <span className="text-slate-400 text-[11px] block">Presupuesto: {o.valor_estimado ? `$ ${Number(o.valor_estimado).toLocaleString('es-CO')}` : '-'}</span>
@@ -2070,6 +2081,18 @@ function MainApp() {
                   <p><strong>Accesorios:</strong> {documentoImprimir.data.deja_cargador ? `🔌 Cargador (${documentoImprimir.data.serie_cargador || 'S/N no registrado'})` : 'Ninguno'}</p>
                   <p><strong>Fallo Reportado:</strong> {documentoImprimir.data.fallo_reportado || documentoImprimir.data.falla_reportado}</p>
                   <p><strong>Diagnóstico Actual:</strong> {documentoImprimir.data.diagnostico || 'En proceso'}</p>
+                  {(Array.isArray(documentoImprimir.data.observaciones) ? documentoImprimir.data.observaciones.filter(obs => obs && obs._tipo !== 'garantia') : []).length > 0 && (
+                    <div className="mt-2 border-t border-dashed border-slate-300 pt-2">
+                      <p className="font-bold mb-1">Historial de Avances Anteriores:</p>
+                      <div className="space-y-1 text-sm">
+                        {(Array.isArray(documentoImprimir.data.observaciones) ? documentoImprimir.data.observaciones.filter(obs => obs && obs._tipo !== 'garantia') : []).map((obs, idx) => (
+                          <p key={idx} className="whitespace-pre-wrap break-words">
+                            <strong>[{obs.fecha || 'Sin fecha'}]</strong> {obs.texto}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="flex gap-4">
                     {Number(documentoImprimir.data.valor_estimado) > 0 && (
